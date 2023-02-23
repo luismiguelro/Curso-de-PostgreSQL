@@ -15,7 +15,8 @@
       - [Comandos para debug y optimizacion](#comandos-para-debug-y-optimizacion)
       - [Comandos para cerrar la consola](#comandos-para-cerrar-la-consola)
       - [Ejecutando consultas en la base de datos usando la consola](#ejecutando-consultas-en-la-base-de-datos-usando-la-consola)
-
+  - [Clase 8 Presentación del Proyecto](#clase-8-presentación-del-proyecto)
+  
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -396,3 +397,15 @@ Probemos cómo funciona al medición realizando la encriptación de un texto cua
 La consulta tardó 0.0mili-segundos
 
 Ahora que sabes como manejar algunos de los comandos más utilizados en PostgreSQL es momento de comenzar a practicar!!!
+
+### Clase 8 Presentación del Proyecto
+
+El proyecto consiste en el modelado de un sistema de transporte de personas mediante trenes.
+
+Reto
+
+- Pasajero
+- Trayecto
+- Estación
+- Tren
+- Viaje
