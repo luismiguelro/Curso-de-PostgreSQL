@@ -16,7 +16,10 @@
       - [Comandos para cerrar la consola](#comandos-para-cerrar-la-consola)
       - [Ejecutando consultas en la base de datos usando la consola](#ejecutando-consultas-en-la-base-de-datos-usando-la-consola)
   - [Clase 8 Presentación del Proyecto](#clase-8-presentación-del-proyecto)
-  
+  - [Clase 9 Tipos de Datos](#clase-9-tipos-de-datos)
+  - [Clase 10 Diseñando nuestra base de datos: estructura de las tablas](#clase-10-diseñando-nuestra-base-de-datos-estructura-de-las-tablas)
+  - [Clase 11 Jerarquia de Bases de Datos](#clase-11-jerarquia-de-bases-de-datos)
+  - 
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -409,3 +412,82 @@ Reto
 - Estación
 - Tren
 - Viaje
+### Clase 9 Tipos de Datos
+
+PostgreSQL soporta los siguientes tipos de datos
+
+Principales y comunes en SQL:
+
+- Numéricos(Números enteros, Números Decimales, Seriales)
+- Monetarios(cantidad de moneda)
+- Texto(almacenar cadenas y texto, existen tres VARCHAR, CHAR, TEXT)
+- Binario(1 Y 0)
+- Fecha/Hora(Para almacenar Fechas y/o Horas, DATE TYPE, TIME TYPE, TIMESTAMP, INTERVAL)
+- Boolean(Verdadero o Falso)
+
+Especiales propios de postgres
+
+- Geométricos: Permiten calcular distancias y áreas usando dos valores X y Y.
+- Direcciones de Red: Cálculos de máscara de red
+- Texto tipo bit: Cálculos en otros sistemas, ejm(hexadecimal, binario)
+XML, JSON: Postgres no permite guardar en estos formatos
+- Arreglos: Vectores y Matrices
+
+### Clase 10 Diseñando nuestra base de datos: estructura de las tablas
+
+![diagrama_entidad_relacion_proyecto](src/diagrama_entidad_relacion_proyecto.jpg)
+![diagrama_entidad_relacion_proyecto](https://user-images.githubusercontent.com/101124184/222177318-2c013519-e122-423d-9a3b-351764fb0c69.jpg)
+
+
+### Clase 11 Jerarquia de Bases de Datos
+
+Toda jerarquía de base de datos se basa en los siguientes elementos:
+
+- **Servidor de base de datos:** Computador que tiene un motor de base de datos instalado y en ejecución.
+
+- **Motor de base de datos:** Software que provee un conjunto de servicios encargados de administrar una base de datos.
+
+- **Base de datos:** Grupo de datos que pertenecen a un mismo contexto.
+
+- **Esquemas de base de datos en PostgreSQL:** Grupo de objetos de base de datos que guarda relación entre sí (tablas, funciones, relaciones, secuencias).
+
+- **Tablas de base de datos:** Estructura que organiza los datos en filas y columnas formando una matriz.
+
+**PostgreSQL es un motor de base de datos**.
+
+La estructura de la base de datos diseñada para el reto corresponde a los siguientes
+elementos:
+
+![bd_proyecto](src/bd_proyecto.jpg)
+
+La base de datos se llama transporte, usaremos su esquema predeterminado public.
+
+El esquema public contiene las siguientes tablas:
+
+- Estación
+- Pasajero
+- Tren
+
+Y las tablas de relaciones entre cada uno de los elementos anteriores son:
+
+- Trayecto
+- Viaje
+
+El esquema relacional entre las tablas corresponde al siguiente diagrama:
+
+![diagrama_entidad_relacion_proyecto_styled](src/diagrama_entidad_relacion_proyecto_styled.jpg)
+
+**Estación**
+Contiene la información de las estaciones de nuestro sistema, incluye datos de nombre con tipo de dato texto y dirección con tipo de dato texto, junto con un número de identificación único por estación.
+
+**Tren**
+Almacena la información de los trenes de nuestro sistema, cada tren tiene un modelo con tipo de dato texto y una capacidad con tipo de dato numérico que representa la cantidad de personas que puede llevar ese tren, también tiene un ID único por tren.
+
+**Trayecto**
+Relaciona los trenes con las estaciones, simula ser las rutas que cada uno de los trenes pueden desarrollar entre las estaciones
+
+**Pasajero**
+Es la tabla que contiene la información de las personas que viajan en nuestro sistema de transporte masivo, sus columnas son nombre tipo de dato texto con el nombre completo de la persona, dirección_residencia con tipo de dato texto que indica dónde vive la persona, fecha_nacimiento tipo de dato texto y un ID único tipo de dato numérico para identificar a cada persona.
+
+**Viaje**
+Relaciona Trayecto con Pasajero ilustrando la dinámica entre los viajes que realizan las personas, los cuales parten de una estación y se hacen usando un tren.
