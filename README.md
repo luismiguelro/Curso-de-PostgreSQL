@@ -19,7 +19,12 @@
   - [Clase 9 Tipos de Datos](#clase-9-tipos-de-datos)
   - [Clase 10 Diseñando nuestra base de datos: estructura de las tablas](#clase-10-diseñando-nuestra-base-de-datos-estructura-de-las-tablas)
   - [Clase 11 Jerarquia de Bases de Datos](#clase-11-jerarquia-de-bases-de-datos)
-  - 
+  - [Modulo 2 Gestión de la información en bases de datos](#modulo-2-gestión-de-la-información-en-bases-de-datos)
+    - [Clase 12 Creación de Tablas](#clase-12-creación-de-tablas)
+    - [clase 13 Particiones](#clase-13-particiones)
+    - [Clase 14 Creacion de Roles](#clase-14-creacion-de-roles)
+      - [Creando roles desde SQL Shell](#creando-roles-desde-sql-shell)
+      - [Creando roles desde PGAdmin](#creando-roles-desde-pgadmin)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -491,3 +496,346 @@ Es la tabla que contiene la información de las personas que viajan en nuestro s
 
 **Viaje**
 Relaciona Trayecto con Pasajero ilustrando la dinámica entre los viajes que realizan las personas, los cuales parten de una estación y se hacen usando un tren.
+
+## Modulo 2 Gestión de la información en bases de datos
+
+### Clase 12 Creación de Tablas
+
+Las tablas en PostgreSQL siguen el estándar SQL para las tablas
+
+- CREATE
+- ALTER
+- DROP
+
+**Creación una base de datos en pgAdmin**.
+
+En el arbol del server damos click derecho en nuestra BD_PRUEBAS/databases en la opcion CREATE y asignamos un nombre.
+
+![create_table_](src/create_table_1.jpg)
+
+PGAdmin también nos muestra la sentencia que ejecutara por debajo en consola.
+
+![create_table_2](src/create_table_2.jpg)
+
+Se crea todo el arbol relacionado a la base de datos, dentro de este se encuentran los Schemas, de manera predeterminada se crea el Schema public en el vamos a crear nuestra primera tabla
+
+![create_table_3](src/create_table_3.jpg)
+
+Le asignamos el nombre de pasajero (aunque como practica común las tablas se nombren en plural)
+
+![create_table_4](src/create_table_4.jpg)
+
+Y creamos las columnas definidas en nuestro diagrama entidad-relacion
+
+![create_table_5](src/create_table_5.jpg)
+
+Nota:
+
+**Serial** es un tipo de dato de postgreSQL y corresponde a un tipo de dato Integer Autoincremental.
+
+**Character Varying** es un tipo de dato similar a Varchar en otros manejadores, si no estamos seguros de la longitud podemos dejar el area vacía.
+
+**Date** Corresponde a fechas.
+
+Ahora definimos los constraints para definir nuestra llave primaria, el **estándar de postgres** es **nombre_de_la_tabla_pkey**
+
+![create_table_6](src/create_table_6.jpg)
+
+Al final podemos ver la sentencia SQL y guardamos nuestra tabla.
+
+![create_table_7](src/create_table_7.jpg)
+
+Con ello creamos la tabla pasajero, ahora usaremos PGAdmin para crear el script de inserción dando click derecho a la tabla y seleccionando insert, esto crear el script automáticamente para (INSERT INTO de SQL) agregar los datos.
+
+![create_table_8](src/create_table_8.jpg)
+
+![create_table_9](src/create_table_9.jpg)
+
+Borramos **id** por ser autoincremental
+
+Para obtener la fecha actual escribimos y saber en que formato insertar los datos
+
+```sql
+SELECT current_date;
+```
+
+Insertamos el registro seleccionado solo el query a realizar y usamos el boten de play o F5.
+
+![create_table_0](src/create_table_0.jpg)
+
+Podemos verificar que los datos yendo a los query tools y hacemos la consulta de la tabla.
+
+**Reto:** crear las tablas faltantes del diagrama entidad-relacion.
+
+Aquí los scripts del reto
+
+```sql
+-- Crear tabla tren
+CREATE TABLE public.tren
+(
+id serial,
+modelo character varying(20),
+capacidad character varying,
+CONSTRAINT tren_pkey PRIMARY KEY (id)
+)
+WITH (
+OIDS = FALSE
+);
+ALTER TABLE public.tren
+OWNER to postgres;
+-- Crear tabla estacion
+CREATE TABLE public.estacion
+(
+id serial,
+nombre character varying,
+direccion character varying,
+CONSTRAINT estacion_pkey PRIMARY KEY (id)
+)
+WITH (
+OIDS = FALSE
+);
+ALTER TABLE public.estacion
+OWNER to postgres;
+-- Crear tabla trayecto
+CREATE TABLE public.trayecto
+(
+id serial,
+id_estacion integer,
+id_tren integer,
+nombre character varying,
+CONSTRAINT trayecto_pkey PRIMARY KEY (id)
+)
+WITH (
+OIDS = FALSE
+);
+-- Crear tabla trayecto
+ALTER TABLE public.trayecto
+OWNER to postgres;
+CREATE TABLE public.viaje
+(
+id serial,
+id_pasajero integer,
+id_trayecto integer,
+inicio date,
+fin date,
+CONSTRAINT viaje_pkey PRIMARY KEY (id)
+)
+WITH (
+OIDS = FALSE
+);
+ALTER TABLE public.viaje
+OWNER to postgres;
+```
+
+### clase 13 Particiones
+
+En ocasiones llega un punto en elq ue tienes mucha informacion en una sola tabla, y al momento de consultarla la base de datos tendrá que hacer el recorrido de toda la informacion para encontrar el contenido que estas buscando.
+
+Imagina que nuestra tabla de viajes tiene cien mil registros, y que quieres consultar los viajes realizados en un rango de fechas, esa consulta ocupara un espacio en memoria que deberá ser leída para obtener la respuesta, en este punto entran las particiones.
+
+Las particiones tiene como ventaja lo siguiente:
+
+- Separación física de datos
+- Conservan la Estructura Lógica
+
+La separacion física hace referencia a que es posible guardar varias parte de la misma tabla en diferentes espacios de disco o incluso en otros discos, internamente Postgre usando el mismo nombre de la tabla asigna otras pequeñas tablas que tienen un rango definido, en nuestro caso le diríamos que el rango son las fechas o las horas, por ejemplo una partición para junio, otra para julio y al hacer la consulta con el mismo **SELECT** de siempre Postgre buscaría la informacion solo en la partición correspondiente, esto reduce el tiempo de ejecucion de la consulta y a su vez evita que la tabla se bloquee al ser consultada o escrita demasiadas veces en periodos de tiempo cortos.
+
+En esta clase vamos a crear una tabla, asignarle particiones y después hacer un **INSERT** común y corriente y hacer una consulta común y corriente con pgAdmin.
+
+Creamos la tabla bitacora_viaje con toda la informacion de los viajes tendra los campos id, id_viaje, fecha, fecha sera el campo por el cual vamos a particionar la tabla.
+
+![particiones_1](src/particiones_1.jpg)
+
+**Como lo hacemos?**
+
+Primero indicamos a la tabla que haremos la partición y luego por cual campo seria, para después agregar cada una de las particiones por separado para ello iremos al apartado **Partition**.
+
+Dejamos constraints vacío, y en General indicamos que es una tabla particionada.
+
+![particiones_2](src/particiones_2.jpg)
+
+Con ello nos pide una llave para hacer la partición, la asignamos en la tabla partitions
+
+![particiones_3](src/particiones_3.jpg)
+
+![particiones_4](src/particiones_4.jpg)
+
+Creamos un **INSERT**  para dicha tabla.
+
+![particiones_5](src/particiones_5.jpg)
+
+Observamos el error al no existir ninguna partición, ahora hay que crearla, esto lo hacemos creando una nueva tabla
+
+```sql
+CREATE TABLE bitacora_viaje_200_0 PARTITION OF bitacora_viaje
+FOR VALUES FROM ('200-0-0') TO ('209-0-3')
+```
+
+Creamos la tabla de partición para 200 del mes de enero ahora todos los **INSERT** correspondientes a ese rango de tiempo se guardaran en esa tabla.
+
+![particiones_6](src/particiones_6.jpg)
+
+Ejecutamos el INSERT con un rango de la partición.
+
+![particiones_7](src/particiones_7.jpg)
+
+ Pero en contraste de que si queremos insertar datos fuera de ese rango de tiempo la operación nos arrojara un error como al principio, por lo tanto tendremos que crear una nueva partición.
+
+Observa que las particiones si existen físicamente.
+
+![particiones_8](src/particiones_8.jpg)
+
+Nota final, no es posible crear llaves primarias en tablas particionadas ya que la informacion esta toda dividas, no te preocupes estas tablas se utilizan para guardar informacion en masa como bitácoras y hacen referencia a tablas que si tienen estas llaves primarias (miralo como un pivot table)
+
+Si vas a crear un proyecto donde tengas informacion histórica es buena practica iniciarla como una tabla particionada para mejorar el performance de nuestra aplicación
+
+En mi ejemplo use un rango de 9 años de 200 a 209, pero si la data es enorme podemos hacer particiones en unidades de meses, semanas o dias.
+
+Una vez aprendido este concepto borramos la tabla, ya que no es necesaria para el proyecto.
+
+### Clase 14 Creacion de Roles
+
+Hemos creado la tablas, ahora debemos mirar los roles, estos igual que las tablas tienen la capacidad de ser creados y eliminados, sin embargo tiene las siguientes caracteristicas especiales.
+
+- Crear y eliminar otros roles
+- Asignar atributos
+- Agrupar con otros roles (conjunto global de permisos)
+- Roles predeterminados
+- Son independientes de las bases de datos
+
+Hasta ahora hemos estado utilizando el usuario predeterminado de postgres, lo cual sabemos que es muy peligroso ya que al ser un usuario de tipo root este tiene todos los privilegios para borrar todo, lo ideal es crear un usuario para trabajar con los roles y permisos adecuados.
+
+#### Creando roles desde SQL Shell
+
+Crearemos un rol con la terminal que tenga la capacidad de hacer login
+
+```sql
+\H CREATE ROLE
+CREATE ROLE nombre [ [ WITH ] opción [ ... ] ]
+donde opción puede ser:
+ SUPERUSER | NOSUPERUSER
+| CREATEDB | NOCREATEDB
+| CREATEROLE | NOCREATEROLE
+| INHERIT | NOINHERIT
+| LOGIN | NOLOGIN
+| REPLICATION | NOREPLICATION
+| BYPASSRLS | NOBYPASSRLS
+| CONNECTION LIMIT limite_conexiones
+| [ ENCRYPTED ] PASSWORD 'contraseña' | PASSWORD NULL
+| VALID UNTIL 'fecha_hora'
+| IN ROLE nombre_de_rol [, ...]
+| IN GROUP nombre_de_rol [, ...]
+| ROLE nombre_de_rol [, ...]
+| ADMIN nombre_de_rol [, ...]
+| USER nombre_de_rol [, ...]
+| SYSID uid
+```
+
+CREATE USER es un alias de CREATE ROLE
+
+```sql
+postgres=# CREATE ROLE usuario_consulta;
+CREATE ROLE
+postgres=# \dg
+Lista de roles
+  Nombre de rol   | Atributos | Miembro de
+------------------+------------------------------------------------------------+------------
+ postgres| Superusuario, Crear rol, Crear BD, Replicacion, Ignora RLS | {}
+ usuario_consulta | No puede conectarse | {}
+postgres=#
+```
+
+En este punto hemos creado un nuevo usuario/role, pero este no tiene atributos/permisos para realizar ninguna acción, solucionamos esto igual que una tabla con el comando ALTER.
+
+```sql
+postgres=# ALTER ROLE  usuario_consulta WITH LOGIN;
+ALTER ROLE
+postgres=# \dg
+Lista de roles
+  Nombre de rol   | Atributos | Miembro de
+------------------+------------------------------------------------------------+------------
+ postgres| Superusuario, Crear rol, Crear BD, Replicacion, Ignora RLS | {}
+ usuario_consulta | | {}
+```
+
+Observamos ahora que desaparece la leyenda de que el usuario no puede conectarse, ahora realizamos la misma operación para darle los atributos de un superusuario.
+
+```SQL
+postgres=# ALTER ROLE usuario_consulta SUPERUSER;
+ALTER ROLE
+postgres=# \dg
+Lista de roles
+  Nombre de rol   | Atributos | Miembro de
+------------------+------------------------------------------------------------+------------
+ postgres| Superusuario, Crear rol, Crear BD, Replicacion, Ignora RLS | {}
+ usuario_consulta | Superusuario  | {}
+```
+
+Ahora asignamos la contraseña a la base de datos.
+
+```sql
+postgres=# ALTER ROLE  usuario_consulta WITH PASSWORD 'etc23';
+```
+
+Ahora ya nos podemos cambiar nuestro rol accediendo con otra consola accediendo con el usuario_consulta
+
+```sql
+Server [localhost]:
+Database [postgres]:
+Port [5432]:
+Username [postgres]: usuario_consulta
+Contraseña para usuario usuario_consulta:
+psql (   .9)
+ADVERTENCIA: El código de página de la consola (850) difiere del código
+  de página de Windows (252).
+  Los caracteres de 8 bits pueden funcionar incorrectamente.
+  Vea la página de referencia de psql «Notes for Windows users»
+  para obtener más detalles.
+Digite «help» para obtener ayuda.
+postgres=#
+```
+
+Ahora hacemos la operación de borrado desde otro perfil de superusuario en este caso el default postgres
+
+```sql
+postgres=# DROP ROLE usuario_consulta;
+DROP ROLE
+postgres=# \dg
+  Lista de roles
+ Nombre de rol | Atributos | Miembro de
+---------------+------------------------------------------------------------+------------
+ postgres | Superusuario, Crear rol, Crear BD, Replicacion, Ignora RLS | {}
+postgres=#
+```
+
+#### Creando roles desde PGAdmin
+
+![create_user_](src/create_user_1.jpg)
+
+![create_user_2](src/create_user_2.jpg)
+
+Asignamos un password
+
+![create_user_3](src/create_user_3.jpg)
+
+Asignamos permisos para solo lectura
+
+![create_user_4](src/create_user_4.jpg)
+
+![create_user_5](src/create_user_5.jpg)
+
+Ahora vamos a darle permisos a nuestras tablas para que el usuario_consulta pueda tener acceso a interactuar informacion y consultarla, este no podrá acceder a la estructura de la misma ni borrar informacion
+
+![create_user_6](src/create_user_6.jpg)
+
+![create_user_7](src/create_user_7.jpg)
+
+Damos click en next y seleccionamos los permisos que se otorgaran en este caso insert, select y update
+
+![create_user_8](src/create_user_8.jpg)
+
+![create_user_9](src/create_user_9.jpg)
+
+Verificamos que en las otras tablas.
+
+![create_user_0](src/create_user_0.jpg)
