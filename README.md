@@ -25,6 +25,9 @@
     - [Clase 14 Creacion de Roles](#clase-14-creacion-de-roles)
       - [Creando roles desde SQL Shell](#creando-roles-desde-sql-shell)
       - [Creando roles desde PGAdmin](#creando-roles-desde-pgadmin)
+  - [Clase 15 Llaves foraneas](#clase-15-llaves-foraneas)
+  - [Clase 16 Insercion y consulta de datos](#clase-16-insercion-y-consulta-de-datos)
+  - [Clase 17 Insercion masiva de datos](#clase-17-insercion-masiva-de-datos)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -839,3 +842,164 @@ Damos click en next y seleccionamos los permisos que se otorgaran en este caso i
 Verificamos que en las otras tablas.
 
 ![create_user_0](src/create_user_0.jpg)
+### Clase 15 Llaves foraneas
+
+Ya tenemos las tablas con sus llaves primarias, hemos creado los roles, ahora tenemos que crear las llaves foraneas estas hacen referencia a la informacion que existe entre las tablas y corresponde con nuestro ACID estándar en la parte de consistencia , es decir que todas las tablas corresponden entre si y la informacion es congruente.
+
+Para ello tenemos que entender que las llaves foraneas siguen una estructura muy básica:
+
+- Tabla de origen
+- Tabla destino
+- Acciones en caso de modificación en la tabla de origen
+
+Vamos a definir la primer relacion con el trayecto y sus relaciones con las otras tablas, vemos en los constraints donde nos indica cual valor es una llave primaria y asegura que ese valor sea único, y a continuación damos click en Foreign Key para definir las relaciones con las otras tablas.
+
+![foreign_key_](src/foreign_key_1.jpg)
+
+Damos click en el símbolo de + para que acepte los cambios, la pestaña de Action es la mas importante ya que se indica que acciones se llevaran a cabo cuando ocurra un cambio en la tabla principal.
+
+![foreign_key_2](src/foreign_key_2.jpg)
+
+![foreign_key_3](src/foreign_key_3.jpg)
+
+A continuación creamos la relacion de trayecto con tren usando el Query Tool
+
+```sql
+ALTER TABLE  trayecto ADD CONSTRAINT trayecto_tren_fk FOREIGN KEY (id_tren)
+REFERENCES public.tren (id) MATCH SIMPLE
+ON UPDATE CASCADE
+ON DELETE CASCADE
+```
+
+![foreign_key_4](src/foreign_key_4.jpg)
+
+Aplicaremos lo mismo con la tabla de viaje
+
+![foreign_key_5](src/foreign_key_5.jpg)
+
+![foreign_key_6](src/foreign_key_6.jpg)
+
+![foreign_key_7](src/foreign_key_7.jpg)
+
+```sql
+ALTER TABLE public.viaje
+ADD CONSTRAINT viaje_trayecto_fkey FOREIGN KEY (id_trayecto)
+REFERENCES public.trayecto (id) MATCH SIMPLE
+ON UPDATE CASCADE
+ON DELETE CASCADE
+```
+
+![foreign_key_8](src/foreign_key_8.jpg)
+
+Comprobamos que los cambios se hayan realizado en la tabla.
+
+![foreign_key_9](src/foreign_key_9.jpg)
+
+### Clase 16 Insercion y consulta de datos
+
+Vamos a insertar datos en la tabla estacion, para ello damos de nuevo click derecho en la tabla deseada, vamos al menu Scripts y después al apartado INSERT Script
+
+![insert_](src/insert_1.jpg)
+
+Creamos dos INSERT
+
+![insert_2](src/insert_2.jpg)
+
+![insert_3](src/insert_3.jpg)
+
+```sql
+INSERT INTO public.estacion(
+nombre, direccion)
+VALUES ('Estacion Centro', 'St #2');
+```
+
+```sql
+INSERT INTO public.estacion(
+nombre, direccion)
+VALUES ('Estacion Norte', 'St 00#2');
+```
+
+Y verificamos que se hayan insertado los datos
+
+![insert_4](src/insert_4.jpg)
+
+Insertamos la informacion de la tabla de trenes
+
+![insert_5](src/insert_5.jpg)
+
+A continuación viene la parte interesante que es relacionar la informacion de las tablas tren y estacion en la tabla trayecto.
+
+![insert_6](src/insert_6.jpg)
+
+En caso de querer agregar un tren o una estacion que no existe PGAdmin/la consola no informara acerca del tipo de error
+
+![insert_7](src/insert_7.jpg)
+
+Finalmente borramos la informacion de la tabla tren para el primer id
+
+![insert_8](src/insert_8.jpg)
+
+Ahora veamos el efecto en la tabla de trayectos
+
+![insert_9](src/insert_9.jpg)
+
+Observamos que se elimino la informacion (por la acción CASCADE) del trayecto ya que se elimino el id (llave primaria) del tren, ahora una peculiaridad es que si creamos otro tren sin definir explícitamente el valor del id tendremos un tren id 2, y el id del trayecto también cambiara.
+
+![insert_0](src/insert_0.jpg)
+
+![insert_1](src/insert_1.jpg)
+
+![insert_2](src/insert_2.jpg)
+
+![insert_3](src/insert_3.jpg)
+
+Ahora que pasa si cambiamos el ID del tren? Eso lo logramos con el comando UPDATE o UPDATE Script de PGAdmin
+
+![insert_4](src/insert_4.jpg)
+
+![insert_5](src/insert_5.jpg)
+
+### Clase 17 Insercion masiva de datos
+
+Para esta clase usaremos el servicios <https://mockaroo.com/> para generar datos y después hacer las consultas y los temas avanzados de este curso.
+
+El servicio es intuitivo, por lo que deben quedar los campos de la siguiente manera.
+
+![insersion_masiva_1](src/insersion_masiva_1.jpg)
+
+Hacemos click en el botón download y descargamos el script SQL, lo abrimos en nuestro editor de texto, copiamos y pegamos en el Script insert de estacion.
+
+pero antes reiniciamos limpiamos las tablas
+
+```sql
+TRUNCATE estacion CASCADE;
+TRUNCATE tren CASCADE;
+TRUNCATE trayecto CASCADE;
+TRUNCATE pasajero CASCADE;
+TRUNCATE viaje CASCADE;
+```
+
+y reiniciamos el serial el serial de las tablas
+
+```sql
+TRUNCATE TABLE tren, trayecto, viaje, estacion, pasajero RESTART IDENTITY;
+```
+
+![insersion_masiva_2](src/insersion_masiva_2.jpg)
+
+Ahora hacemos lo mismo para la tabla de trenes.
+
+![insersion_masiva_3](src/insersion_masiva_3.jpg)
+
+![insersion_masiva_4](src/insersion_masiva_4.jpg)
+
+![insersion_masiva_5](src/insersion_masiva_5.jpg)
+
+![insersion_masiva_6](src/insersion_masiva_6.jpg)
+
+Creamos la data para trayecto y para viaje
+
+![insersion_masiva_7](src/insersion_masiva_7.jpg)
+
+![insersion_masiva_8](src/insersion_masiva_8.jpg)
+
