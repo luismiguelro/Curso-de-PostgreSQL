@@ -28,6 +28,17 @@
   - [Clase 15 Llaves foraneas](#clase-15-llaves-foraneas)
   - [Clase 16 Insercion y consulta de datos](#clase-16-insercion-y-consulta-de-datos)
   - [Clase 17 Insercion masiva de datos](#clase-17-insercion-masiva-de-datos)
+- [Modulo 3 Generar consultas avanzadas](#modulo-3-generar-consultas-avanzadas)
+    - [Clase 18 Cruzar tablas: SQL JOIN](#clase-18-cruzar-tablas-sql-join)
+    - [Clase 19 Funciones Especiales Principales](#clase-19-funciones-especiales-principales)
+    - [Clase 20 Funciones Especiales Avanzadas](#clase-20-funciones-especiales-avanzadas)
+    - [Clase 21 Vistas](#clase-21-vistas)
+      - [Vista volatil](#vista-volatil)
+      - [Vista Materializada](#vista-materializada)
+    - [Clase 22 PL/SQL](#clase-22-plsql)
+      - [Creando funciones con PL](#creando-funciones-con-pl)
+      - [Creando funciones con PGAdmin](#creando-funciones-con-pgadmin)
+    - [Clase 23 Triggers](#clase-23-triggers)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -1003,3 +1014,460 @@ Creamos la data para trayecto y para viaje
 
 ![insersion_masiva_8](src/insersion_masiva_8.jpg)
 
+## Modulo 3 Generar consultas avanzadas
+
+### Clase 18 Cruzar tablas: SQL JOIN
+
+Ya tenemos informacion en nuestra base de datos, ahora podemos implementar joins para unir las tablas y extraer informacion de valor, recordemos que los joins implementan toda la teoría de conjuntos, si vienes de un background con python los joins son iguales a los sets.
+
+Los siguientes son los tipos de joins
+
+- JOIN(INNER)
+- LEFT(OUTER)
+- RIGHT(OUTER)
+- FULL OUTER
+
+![tipos_join](src/tipos_join.jpg)
+
+lectura recomendada  <https://www.postgresqltutorial.com/postgresql-joins/>
+
+Consultas de la clase
+
+```sql
+-- Inner Join o join
+select * from pasajero
+join viaje on (viaje.id_pasajero = pasajero.id);
+
+-- que pasajeros no han tomado ningun viaje
+select * from pasajero
+LEFT JOIN viaje on (viaje.id_pasajero = pasajero.id)
+WHERE viaje.id IS NULL;
+```
+
+![join_](src/join_1.jpg)
+
+### Clase 19 Funciones Especiales Principales
+
+Postgres tiene una lista de funciones especiales que están diseñadas exclusivamente para ayudarte a desarrollar tu aplicación mucho mas rápido algunas de ellas son:
+
+- **ON CONFLICT DO:** Nos ayuda cuando queremos insertar o modificar los datos en una tabla que no podamos y justamente después hacemos la actualización correcta, es decir si queremos insertar un dato que ya existe un conflict do no permite hacer una actualización sobre el mismo dato.
+
+- **RETURNING:** Nos permite devolver todos los cambios que hemos hecho sobre la base de datos, es decir si hacemos un insert nos devuelve todos los datos que fueron insertados en la base de datos, y si hay un campo de tipo serial devuelve el valor asignado.
+
+- **LIKE/ALIKE:** nos sirve para hacer búsquedas al estilo de regex por ejemplo buscar nombres que comiencen con la letra o
+
+- **IS/IS NOT:** nos permite comparar dos tipos de datos que no sean estándar como numérico y alfanumérico sino que sean de tipo objeto o especiales como Null, en este podemos saber por ejemplo si un campo es nulo o no lo es.
+
+Veremos como hacer esto con PGAdmin.
+
+Primer Ejemplo: Insertar un dato en la tabla estacion con id = .
+
+**ON CONFLICT DO NOTHING**.
+
+![funciones_especiales_1](src/funciones_especiales_1.jpg)
+
+```SQL
+INSERT INTO public.estacion(
+id, nombre, direccion)
+VALUES (, 'Nombre', 'Dire')
+ON CONFLICT DO NOTHING;
+```
+
+**ON CONFLICT (COLUMNA) DO UPDATE SET**.
+
+![funciones_especiales_2](src/funciones_especiales_2.jpg)
+
+```SQL
+INSERT INTO public.estacion(
+id, nombre, direccion)
+VALUES (, 'Nombre', 'Dire')
+ON CONFLICT(ID) DO UPDATE SET nombre = 'Nombre', direccion = 'Dire';
+```
+
+**RETURNING**.
+
+![funciones_especiales_3](src/funciones_especiales_3.jpg)
+
+```SQL
+INSERT INTO public.estacion(
+nombre, direccion)
+VALUES ('RET', 'RETDRI')
+RETURNING *;
+```
+
+**LIKE**.
+
+![funciones_especiales_4](src/funciones_especiales_4.jpg)
+
+```SQL
+SELECT nombre
+FROM public.pasajero
+WHERE nombre ILIKE 'o%';
+
+-- % buscar 1 o cualquier valor
+-- _ buscar solamente 1
+-- I buscar mayus o minusc por igual
+```
+
+****IS/IS NOT:****.
+
+![funciones_especiales_5](src/funciones_especiales_5.jpg)
+
+```SQL
+SELECT *
+FROM public.tren
+WHERE modelo is NULL;
+```
+
+### Clase 20 Funciones Especiales Avanzadas
+
+Funciones mas comunes en postgres:
+
+- **COALESCE:** permite comprar dos valores y retornar cual de los dos no es nulo
+
+- **NULLIF:** permite comparar dos valores y retorna Null si son iguales
+  
+- **GREATEST:** permite comprar un arreglo de valores y retorna el mayor
+
+- **LEAST:** permite comprar un arreglo de valores y retorna el menor
+
+- **BLOQUES ANÓNIMOS:** permite ingresar condicionales dentro de una consulta de base de datos.
+
+**Ejemplo COALESCE**.
+
+Primero modificar tabla pasajero para tener un dato como nulo.
+
+![funciones_especiales_6](src/funciones_especiales_6.jpg)
+
+```sql
+SELECT id, COALESCE(nombre, 'No Aplica') nombre, direccion_residencia, fecha_nacimiento
+FROM public.pasajero WHERE id = 1;
+```
+
+**Ejemplo NULLIF**.
+
+![funciones_especiales_7](src/funciones_especiales_7.jpg)
+
+```sql
+SELECT NULLIF (0,0);
+```
+
+**Ejemplo GREATEST**.
+
+![funciones_especiales_8](src/funciones_especiales_8.jpg)
+
+```sql
+SELECT GREATEST (0, 1,2,3,4,5,6);;
+```
+
+**Ejemplo LEAST**.
+
+![funciones_especiales_9](src/funciones_especiales_9.jpg)
+
+```sql
+SELECT LEAST (0, 1,2,3,4,5,6);;
+```
+
+**Ejemplo BLOQUES ANÓNIMOS**.
+
+![funciones_especiales_10](src/funciones_especiales_10.jpg)
+
+```sql
+SELECT id, nombre, direccion_residencia, fecha_nacimiento,
+CASE --inicia bloque anónimo
+WHEN fecha_nacimiento > '2015-01-01' THEN
+'niño'
+ELSE
+'Mayor'
+END --termina bloque anónimo
+FROM public.pasajero;
+```
+
+**Reto:** Consultar la informacion de los pasajeros agregando una columna adicional que nos diga quienes comienzan su nombre por la letra O y tiene mas de 18 años.
+
+```sql
+SELECT id, nombre, direccion_residencia, fecha_nacimiento,
+CASE
+--inicia bloque anónimo
+   WHEN nombre ILIKE 'o%' THEN '1'
+   ELSE '0'
+END as nombre_inicia_o,
+--termina bloque anónimo
+CASE
+--inicia bloque anónimo
+   WHEN EXTRACT(YEAR FROM current_date)- EXTRACT(YEAR FROM fecha_nacimiento) <= 18 THEN
+   'Mayor de 18 años'
+   ELSE
+   'Menor de 18 años'
+END as Mayoria_de_edad
+--termina bloque anónimo
+FROM public.pasajero;
+```
+
+### Clase 21 Vistas
+
+Cuando necesitamos extraer la informacion de una base de datos en forma de consulta muchas veces como por ejemplo para generar reportes es conveniente utilizar las vistas, existen dos tipos.
+
+- Vista: Volátil (trae informacion reciente)
+
+- Vista Materializada: Persistente (trae informacion de memoria con la ultima consulta  histórica)
+
+Cuando la construimos usaremos la sintaxis SELECT vista
+
+#### Vista volatil
+
+Creamos la vista en PGAdmin dando click derecho en views y luego en create
+
+![views_1](src/views_1.jpg)
+
+![views_2](src/views_2.jpg)
+
+```sql
+SELECT *,
+CASE
+WHEN fecha_nacimiento > '2015-01-01' THEN
+'Mayor'
+ELSE
+'niño'
+END as tipo
+FROM public.pasajero
+ORDER BY tipo;
+```
+
+![views_3](src/views_3.jpg)
+
+Guardamos la vista y ahora hacemos la consulta
+
+![views_4](src/views_4.jpg)
+
+Estas vistas volatiles son muy útiles ya que podemos pasar la consulta raw (haciendo referencia a django) a nuestro backend para entregar el estado actual de los datos de nuestra aplicación.
+
+#### Vista Materializada
+
+Para ello hacemos click derecho en Materialized Views y seguimos los pasos del ejemplo anterior.
+
+```sql
+SELECT * from viaje WHERE inicio > '2020-01-01';
+```
+
+Nota: El ejemplo del curso utiliza horas, en mi caso particular utilice fechas.
+
+Hacemos la consulta
+
+![views_5](src/views_5.jpg)
+
+Y observamos el error de que la vista no cuenta con datos, por lo que procedemos a aplicar la sentencia recomendada.
+
+![views_6](src/views_6.jpg)
+
+Si borramos algún registro de nuestra tabla de viaje (29 al inicio 28 al borrar) la vista materializada seguirá conteniendo el total original (29 registros), estas vistas las usamos cuando queremos obtener la informacion 1 vez, esta quedara guardada en memoria.
+
+### Clase 22 PL/SQL
+
+Las PL o procedimientos almacenados hacen parte del motor de postgres y es una de las caracteristicas mas importantes y el porque las personas empiezan a usar este motor, ella nos ayuda a desarrollar código directamente sobre la base su estructura es bastante sencilla, se asemeja a una funcion de cualquier lenguaje de programación (declaración, uso de variables y un fin) y se permite ejecutar dentro de la base de datos.
+
+![pl_1](src/pl_1.jpg)
+
+#### Creando funciones con PL
+
+El primer ejemplo declara una PL nota que todas las PL inician con DO $$ y terminan con $$, este ejemplo levanta un mensaje solamente en la consola, esto con el keyword  **RAISE NOTICE**
+
+![pl_2](src/pl_2.jpg)
+
+Segundo ejemplo usando variables y tipos de datos, esto se hace con la seccion **DECLARE**, **record** nos permite almacenar el tipo de dato de una fila, y si queremos un valor de inicio lo hacemos con ":=" en el lenguaje de postgres y "=" solo esta reservado para las consultas.
+
+![pl_3](src/pl_3.jpg)
+
+Ahora contaremos los registros en la tabla incorporando un contador
+
+![pl_4](src/pl_4.jpg)
+
+Como te habrás dado cuenta no es posible llamar a este PL de esta manera, para ello es necesario encapsularlo de la siguiente forma.
+
+![pl_5](src/pl_5.jpg)
+
+Void indica que no retorna valores, para ejecutar nuestra funcion basta con usar lo siguiente
+
+```sql
+SELECT importantePL();
+```
+
+![pl_6](src/pl_6.jpg)
+
+No retorna ningun dato, pero si los mensajes de lo que ejecutamos.
+
+![pl_7](src/pl_7.jpg)
+
+Si queremos retornar algún dato lo podemos declarar después de **RETURNS** y muy importante como nuestra funcion ya existe debemos hacer uno de la expresión **CREATE OR REPLACE FUNCTION** para nuestra funcion importantePL()
+
+![pl_8](src/pl_8.jpg)
+
+**tip: La mayoria de las PL tienen que ver con consultas**.
+
+#### Creando funciones con PGAdmin
+
+Al igual que los demás ejercicios en el arbol del menu damos click derecho en functions y después en CREATE
+
+Nombramos a nuestra funcion
+
+![pl_9](src/pl_9.jpg)
+
+![pl_10](src/pl_10.jpg)
+
+![pl_11](src/pl_11.jpg)
+
+![pl_12](src/pl_12.jpg)
+
+Guardamos la PL y la ejecutamos igual que la forma anterior a traves del select.
+
+![pl_13](src/pl_13.jpg)
+
+![pl_14](src/pl_14.jpg)
+
+### Clase 23 Triggers
+
+Los Triggers son herramientas muy útiles que nos permiten ejecutar funciones dependiendo de acciones que se ejecuten sobre una tabla, esa acciones pueden ser:
+
+- INSERT
+- UPDATE
+- DELETE
+
+Veremos con PGAdmin como concatenar nuestra pl a una funcion de INSERT, UPDATE O DELETE de la tabla de pasajeros.
+
+Crearemos ua bitacora que nos apoye a la clase, para ello haremos una tabla de nombre "cont_pasajero" con dos columnas "total" con valor integer y "tiempo" en formato time with time zone y una pk  de nombre id (si tienes dudas revisa la primer seccion de las notas).
+
+Ahora la tabla la modificaremos unicamente con la PL que acabamos de crear.
+
+Primero modificamos la ultima PL en las propiedades/code
+
+```sql
+DECLARE
+ rec record;
+ contador integer := 0;
+BEGIN
+  FOR rec IN SELECT * FROM pasajero LOOP
+-- accedes con dot notation a las propiedades de la variable rec
+RAISE NOTICE 'Un pasajero se llama % con el id %',  rec.nombre, rec.id;
+contador := contador + 1;
+  END LOOP;
+  INSERT INTO cont_pasajero (total,tiempo)
+  VALUES (contador, now());
+  RETURN contador;
+END
+```
+
+Ejecutamos nuestra PL y traemos los datos de la ultima tabla creada
+
+![trigger_1](src/trigger_1.jpg)
+
+Borramos un registro de la tabla de pasajeros, volvemos a ejecutar nuestro trigger y consultamos de nuevo los datos.
+
+![trigger_2](src/trigger_2.jpg)
+
+Ahora  vamos a hacer que esa funcion sea de tipo Trigger y la adjuntamos al insert de la tabla de pasajeros.
+
+Para ello modificamos la funcion, donde ahora deberá detornar un trigger, para ello borramos la funcion que teníamos y la volvemos a escribir.
+
+![trigger_3](src/trigger_3.jpg)
+
+Ese trigger de cierta forma lo podemos adjuntar a las acciones sobre una tabla, las acciones compatibles son INSERT, UPDATE, DELETE Y TRUNCATE, para este ejemplo vamos a hacerlo sobre el nivel de INSERT para ello creamos la funcion CREATE TRIGGER
+
+![trigger_4](src/trigger_4.jpg)
+
+Intentamos hacer un insert a pasajeros.
+
+![trigger_5](src/trigger_5.jpg)
+
+Observamos en el error que el trigger no esta retornando nada, por lo que hay que modificarlo en el apartado del arbol triggers lo buscamos y damos click en CREATE y modificamos el trigger.
+
+Un trigger contiene informacion de lo que se esta cambiando debemos confirmar al motor de la base de datos si el cambio se esta llevando a cabo o no.
+
+Los triggers tiene dos variables globales muy importantes **OLD** lo que estaba antes del cambio y **NEW** lo que esta después del cambio, si queremos que el trigger proceda con el nuevo valor usamos NEW, si queremos quedarnos como estábamos usamos OLD, al igual que la variable rec también podemos acceder a las propiedades con dot notation asi tendremos OLD.id o NEW.nombre donde se almacenan los cambios en el estado, estas tienen mucho sentido cuando hacemos un UPDATE, pero para insert lo adecuado siempre sera NEW.
+
+Seguiremos los siguientes pasos
+
+1 Borramos el Trigger
+
+2.- Borramos la funcion en CASCADE para eliminar el disparador también.
+
+```sql
+DROP  FUNCTION public.importante_pl2() CASCADE ;
+```
+
+3.- Creamos el trigger
+
+![trigger_6](src/trigger_6.jpg)
+
+```sql
+
+CREATE FUNCTION public.importante_pl2()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+DECLARE
+ rec record;
+ contador integer := 0;
+BEGIN
+  FOR rec IN SELECT * FROM pasajero LOOP
+    contador := contador + 1;
+  END LOOP;
+  INSERT INTO cont_pasajero (total,tiempo)
+  VALUES (contador, now());
+  RETURN NEW;
+END
+$BODY$;
+```
+
+4.- Creamos el Trigger
+
+![trigger_7](src/trigger_7.jpg)
+
+Ahora procedemos de nuevo a insertar un valor nuevo en la tabla pasajero
+
+![trigger_8](src/trigger_8.jpg)
+
+Consultamos la tabla cont_pasajeros para confirmar
+
+![trigger_9](src/trigger_9.jpg)
+
+**Reto:** Crear un trigger similar al anterior donde se registre cuando se eliminan los pasajeros
+
+**Solución**.
+
+Funcion pl_on_delete_pasajero
+
+```sql
+CREATE FUNCTION public.pl_on_delete_pasajero()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+
+AS $BODY$
+DECLARE
+ rec record;
+ contador integer := 0;
+BEGIN
+  FOR rec IN SELECT * FROM pasajero LOOP
+    contador := contador + 1;
+  END LOOP;
+  INSERT INTO cont_pasajero (total,tiempo)
+  VALUES (contador, now());
+  RETURN NEW;
+END
+$BODY$;
+```
+
+Se crea Trigger con la funcion, el nombre del trigger lo encuentras en los triggers de la tabla pasajero.
+
+```sql
+CREATE TRIGGER mitrigger_2
+    AFTER DELETE
+    ON public.pasajero
+    FOR EACH ROW
+    EXECUTE PROCEDURE pl_on_delete_pasajero();
+```
+
+Verificamos haciendo el DELETE de cualquier usuario y observamos el resultado.
+
+![trigger_10](src/trigger_10.jpg)
