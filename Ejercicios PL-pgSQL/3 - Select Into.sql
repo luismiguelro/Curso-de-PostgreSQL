@@ -30,4 +30,24 @@ BEGIN
 	RAISE NOTICE 'El nombre del producto es: % y su gama es: %', v_nombre_producto, v_gama_producto;
 END;
 $$ LANGUAGE plpgsql;
+
+SELECT obtener_nombre_product('11679');-- NOTICE:  El nombre del producto es: Sierra de Poda 400MM y su gama es: Herramientas
+
 -- 9. Mostrar toda la informacion de un pedido dado su codigo (fechaEsperada, fechaEntrega, fechapedido, estado, comentarios)
+
+CREATE OR REPLACE FUNCTION obtener_info_pedido(codigo integer) 
+RETURNS VOID AS $$
+DECLARE
+	v_codigo_pedido  pedido.codigo_pedido%type;
+	-- rowtype: recorrer tabla
+	v_pedido pedido%rowtype;
+BEGIN
+	SELECT n* INTO v_pedido
+	FROM pedido
+	WHERE pedido.codigo_pedido = codigo;
+
+	RAISE NOTICE 'La fecha del pedido es: %, la fecha esperada es: %, y la fecha de entrega fue: %, el estado del pedido es: %, y los comentarios fueron: %', v_pedido.fecha_pedido, v_pedido.fecha_esperada, v_pedido.fecha_entrega, v_pedido.estado, v_pedido.comentarios;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT obtener_info_pedido(8); -- NOTICE:  La fecha del pedido es: 2008-11-09, la fecha esperada es: 2008-11-14, y la fecha de entrega fue: 2008-11-14, el estado del pedido es: Entregado, y los comentarios fueron: El cliente paga la mitad con tarjeta y la otra mitad con efectivo, se le realizan dos facturas
