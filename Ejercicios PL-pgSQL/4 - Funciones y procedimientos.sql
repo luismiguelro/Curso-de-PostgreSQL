@@ -29,16 +29,17 @@ DECLARE
     v_suma_pago pago.total%type;
 BEGIN
    v_suma_pago := pagos_clientes(v_codigo_pedido);
-
-   RAISE NOTICE 'La suma del pago es: %', v_suma_pago;
-   
-   RETURN v_suma_pago;
+   IF v_suma_pago = -1 THEN
+    RAISE NOTICE 'CLIENTE NO EXISTE';
+   ELSE
+        RAISE NOTICE 'La suma del pago es: %', v_suma_pago;
+   END IF;
 END;
-
 $$ LANGUAGE plpgsql;
 
-
 SELECT total_pedido (3) -- La suma del pago es: 10926.00
+SELECT total_pedido (2) -- NOTICE:  CLIENTE NO EXISTE
+
 
 -- 11.2 Realizar un procedimiento que muestre el total en euros de un pedido, pasale el codigo por parametro.
 
