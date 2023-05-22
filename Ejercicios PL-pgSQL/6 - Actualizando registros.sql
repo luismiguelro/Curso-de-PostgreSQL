@@ -33,7 +33,6 @@ BEGIN
       WHERE matricula = v_matricula;
 	    v_filas_actualizadas := 1;
    END IF;
-
    -- Filas actualizadas
    RETURN v_filas_actualizadas;
 END;
