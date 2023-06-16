@@ -57,4 +57,3 @@ matricula | descripcion    | id_marca | precio_compra
 5689ADD   | Golf GTI   | 7        | 2000
 
 """
-
