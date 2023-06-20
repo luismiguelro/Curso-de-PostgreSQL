@@ -39,6 +39,7 @@
       - [Creando funciones con PL](#creando-funciones-con-pl)
       - [Creando funciones con PGAdmin](#creando-funciones-con-pgadmin)
     - [Clase 23 Triggers](#clase-23-triggers)
+  - [Modulo 4 Integrar bases de datos con servicios externos](#modulo-4-integrar-bases-de-datos-con-servicios-externos)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -1471,3 +1472,101 @@ CREATE TRIGGER mitrigger_2
 Verificamos haciendo el DELETE de cualquier usuario y observamos el resultado.
 
 ![trigger_10](src/trigger_10.jpg)
+
+## Modulo 4 Integrar bases de datos con servicios externos
+
+### Clase 24 Simulando una conexion a Bases de Datos remotas (apuntes igual a la clase, practica en carpeta llamada BD con servicios externos) [Carpeta](https://github.com/luismiguelro/Curso-de-PostgreSQL/blob/main/BD%20con%20Servicios%20Externos/24-%20Simulando%20una%20conexi%C3%B3n%20a%20Bases%20de%20Datos%20remotas.sql)
+
+
+Postgres ofrece un servicio llamado **dblink**, permite conectarte a servidores remotos dentro de una consulta, en el cual puedes hacer **SELECT** una tabla local y hacer incluso un **JOIN** a una base de datos remota.
+
+Para ello crearemos una base de datos en nuestro propio servidor simulando que sea una base de datos remota siguiendo los pasos que ya conocemos y la denominamos como "remota" con una tabla llamada vip, esta tendra dos columnas ID (serial) y Fecha (date), finalmente le damos todos los permisos al usuario que se conectara a la base de datos en forma remota en este caso nuestro **usuario_consulta**.
+
+Insertamos un par de datos para probar.
+
+```sql
+INSERT INTO public.vip(
+    id, fecha)
+    VALUES (50, '2010-01-01');
+```
+
+Y nos desconectamos de esa base de datos para conectarnos después desde la tabla pasajero de la base de datos transporte.
+
+Antes de todo verificamos tener instalado dblink
+
+```sql
+SELECT * FROM
+dblink ('dbname=remota
+         port=5432
+         host=127.0.0.1
+         user=usuario_consulta
+         password=etc123'
+         'SELECT id, fecha FROM vip')
+```
+
+Al ejecutar obtendremos un error si no tenemos instalado db link, lo instalamos con lo siguiente
+
+```sql
+CREATE EXTENSION dblink;
+```
+
+Volvemos a  intentar la conexion.
+
+![datos_remotos_1](src/datos_remotos_1.jpg)
+
+Ya obtuvimos acceso remoto a una base de datos, ahora hagamos un join de nuestros datos locales para saber quien es el usuario VIP
+
+```sql
+SELECT * FROM pasajero
+JOIN
+dblink ('dbname=remota
+         port=5432
+         host=127.0.0.1
+         user=usuario_consulta
+         password=etc123',
+         'SELECT id, fecha FROM vip'
+) as datos_remotos (id integer, fecha date)
+ON (pasajero.id = datos_remotos.id);
+```
+
+Usamos **USING** cuando los dos campos de una consulta **JOIN** son iguales, esto es especial de las consultas esto nos devuelve la misma informacion de la tabla
+
+```sql
+SELECT * FROM pasajero
+JOIN
+dblink ('dbname=remota
+        port=5432
+        host=127.0.0.1
+        user=usuario_consulta
+        password=etc123',
+        'SELECT id, fecha FROM vip'
+) as datos_remotos (id integer, fecha date)
+-- ON (pasajero = datos_remotos)
+USING (id);
+```
+
+![datos_remotos_2](src/datos_remotos_2.jpg)
+
+**Reto** Haz la conexion de forma inversa.
+
+**Solución**.
+
+```sql
+SELECT * FROM vip
+JOIN
+dblink ('dbname=transporte
+         port=5432
+         host=127.0.0.1
+         user=usuario_consulta
+         password=etc123',
+         'SELECT id, nombre, direccion_residencia, fecha_nacimiento FROM pasajero'
+    )  as datos_remotos (id integer,
+                         nombre character varying,
+                         direccion_residencia character varying,
+                         fecha_nacimiento date)
+-- ON (vip.id = datos_remotos.id)
+USING (id)
+;
+```
+
+![datos_remotos_3](src/datos_remotos_3.jpg)
