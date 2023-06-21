@@ -40,6 +40,8 @@
       - [Creando funciones con PGAdmin](#creando-funciones-con-pgadmin)
     - [Clase 23 Triggers](#clase-23-triggers)
   - [Modulo 4 Integrar bases de datos con servicios externos](#modulo-4-integrar-bases-de-datos-con-servicios-externos)
+    - [Clase 24 Simulando una conexion a Bases de Datos remotas](#clase-24-simulando-una-conexion-a-bases-de-datos-remotas)
+    - [Clase 25 Transacciones](#clase-25-transacciones)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -1475,7 +1477,8 @@ Verificamos haciendo el DELETE de cualquier usuario y observamos el resultado.
 
 ## Modulo 4 Integrar bases de datos con servicios externos
 
-### Clase 24 Simulando una conexion a Bases de Datos remotas (apuntes igual a la clase, practica en carpeta llamada BD con servicios externos) [Carpeta](https://github.com/luismiguelro/Curso-de-PostgreSQL/blob/main/BD%20con%20Servicios%20Externos/24-%20Simulando%20una%20conexi%C3%B3n%20a%20Bases%20de%20Datos%20remotas.sql)
+### Clase 24 Simulando una conexion a Bases de Datos remotas 
+(apuntes igual a la clase, practica en carpeta llamada BD con servicios externos) [Carpeta](https://github.com/luismiguelro/Curso-de-PostgreSQL/blob/main/BD%20con%20Servicios%20Externos/24-%20Simulando%20una%20conexi%C3%B3n%20a%20Bases%20de%20Datos%20remotas.sql)
 
 
 Postgres ofrece un servicio llamado **dblink**, permite conectarte a servidores remotos dentro de una consulta, en el cual puedes hacer **SELECT** una tabla local y hacer incluso un **JOIN** a una base de datos remota.
@@ -1570,3 +1573,40 @@ USING (id)
 ```
 
 ![datos_remotos_3](src/datos_remotos_3.jpg)
+
+### Clase 25 Transacciones
+
+Tomando el ejemplo de un cajero automático, cuando uno de sus procesos falla este debe devolver todos los cambios, postgres hace lo mismo, cuando tiene un proceso si alguna de las tareas que lo componen falla este debe poder devolver todos los cambios automáticamente (hacer un rollback). (apuntes igual a la clase, practica en carpeta llamada BD con servicios externos) [Carpeta](https://github.com/luismiguelro/Curso-de-PostgreSQL/blob/main/BD%20con%20Servicios%20Externos/24-%20Simulando%20una%20conexi%C3%B3n%20a%20Bases%20de%20Datos%20remotas.sql)
+
+El proceso se ilustra como
+
+```md
+
+BEGIN
+<Consultas>
+COMMIT (si todo salio bien) | ROLLBACK (si algo salio mal)
+```
+
+En PGAdmin primero desactivamos el auto commit, este viene activo por default, y ejecutamos las siguientes consultas iniciando con **BEGIN**
+
+![transacciones_1](src/transacciones_1.jpg)
+
+Como puedes observar (y marcado con un recuadro naranja) en la interfaz de PGAdmin aparecieron 2 botones "commit" y "rollback" si damos commit deben guardarse los datos, y en el caso opuesto deshacer la transacción, pero como esta es una consulta esto no afecta a la base de datos.
+
+Ahora probemos que pasa con un insert creando una nueva estacion.
+
+![transacciones_2](src/transacciones_2.jpg)
+
+En este punto la informacion esta almacenada en memoria, si quitamos el comentario de algunas de las opciones (no es necesario ejecutar los inserts ya que los datos están en staging) y ejecutamos esa linea se confirmaran o devolverán los cambios, también lo puedes hacer en forma manual con los botones de la interface, aceptamos los cambios y comprobamos la informacion insertada.
+
+![transacciones_3](src/transacciones_3.jpg)
+
+![transacciones_4](src/transacciones_4.jpg)
+
+Hasta ahora todos los datos han sido correctos y el commit se ejecuta sin problemas, ahora haremos un ejemplo usando un id que se encuentra repetido usando un INSERT.
+
+![transacciones_5](src/transacciones_5.jpg)
+
+Al ejecutar los inserts dentro del bloque de código **BEGIN / COMMIT** nos aseguramos que todas las operaciones sean congruentes, si hubiésemos ejecutado las sentencias con la selección  la primera se habría ejecutado y guardado, y la segunda hubiera fallado, pero al estar dentro del bloque de transacción con una consulta que sea errónea se hace el **ROLLBACK** y no se guarda ninguna informacion en la base de datos, ya que postgres siempre lo hace de manera implícita sin mostrarlo en pantalla, una forma explicita seria usándolo con las PL para limitar el numero de vip's en nuestros servicios.
+
+![transacciones_6](src/transacciones_6.jpg)
