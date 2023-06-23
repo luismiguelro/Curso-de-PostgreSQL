@@ -26,3 +26,19 @@ ROLLBACK;
 
 -- Error:
 -- ERROR:  llave duplicada viola restricción de unicidad «cliente_pkey» DETAIL:  Ya existe la llave (codigo_cliente)=(1). SQL state: 23505
+
+
+-- Función SAVEPOINT
+BEGIN;
+INSERT INTO cliente
+VALUES (40,'GoldFish Garden 3','Daniel G','GoldFish','5556901745','5556901746','False Street 52 2 A',NULL,'San Francisco',NULL,'USA','24006',19,3000);
+
+SAVEPOINT clienteadd;
+
+UPDATE public.producto
+SET gama = 'Frutales'
+WHERE codigo_producto = 'ORR-101';
+
+ROLLBACK TO SAVEPOINT clienteadd;
+
+COMMIT;
