@@ -1610,3 +1610,10 @@ Hasta ahora todos los datos han sido correctos y el commit se ejecuta sin proble
 Al ejecutar los inserts dentro del bloque de código **BEGIN / COMMIT** nos aseguramos que todas las operaciones sean congruentes, si hubiésemos ejecutado las sentencias con la selección  la primera se habría ejecutado y guardado, y la segunda hubiera fallado, pero al estar dentro del bloque de transacción con una consulta que sea errónea se hace el **ROLLBACK** y no se guarda ninguna informacion en la base de datos, ya que postgres siempre lo hace de manera implícita sin mostrarlo en pantalla, una forma explicita seria usándolo con las PL para limitar el numero de vip's en nuestros servicios.
 
 ![transacciones_6](src/transacciones_6.jpg)
+
+Función SAVEPOINT:
+Es una instrucción de PostgreSQL que establece un punto de guardado dentro de una transacción. Si algo sale mal después de que se haya establecido un SAVEPOINT, la transacción puede volver al punto de guardado en lugar de revertir todos los cambios realizados hasta ese momento.
+
+Aquí hay un ejemplo de cómo usar SAVEPOINT:
+
+![transacciones_7](src/transacciones_7.png)
