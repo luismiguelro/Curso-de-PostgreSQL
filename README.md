@@ -42,6 +42,7 @@
   - [Modulo 4 Integrar bases de datos con servicios externos](#modulo-4-integrar-bases-de-datos-con-servicios-externos)
     - [Clase 24 Simulando una conexion a Bases de Datos remotas](#clase-24-simulando-una-conexion-a-bases-de-datos-remotas)
     - [Clase 25 Transacciones](#clase-25-transacciones)
+    - [Clase 26 Otras Extensiones para Postgres](#clase-26-otras-extensiones-para-postgres)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -1617,3 +1618,27 @@ Es una instrucción de PostgreSQL que establece un punto de guardado dentro de u
 Aquí hay un ejemplo de cómo usar SAVEPOINT:
 
 ![transacciones_7](src/transacciones_7.png)
+
+### Clase 26 Otras Extensiones para Postgres
+
+Postgres tiene muchas extensiones pre-instaladas pero no activas en tu sistema operativo, y estas te sirven para hacer cálculos, análisis, prototipado inclusive para machine learning.
+
+Activaremos una funcion que te permite comprar dos palabras letra por letra y como suenan cuando se pronuncian en Ingles, todo usando PGAdmin.
+
+Aquí todas las extensiones disponibles <https://www.postgresql.org/docs/11/contrib.html>
+
+Vamos a PGAdmin para instalar leveshtein (la funcion matemática para medir la distancia entre dos palabras)
+
+**Levenshtein**.
+
+![extensiones_1](src/extensiones_1.jpg)
+
+Vemos el resultado es 1, es decir el numero de caracteres que es necesario cambiar para que ambas palabras sean iguales.
+
+**Difference**.
+
+Esta funcion es utilizada junto con algoritmos de machine learning y procesamiento de lenguaje natural el cual sabe que palabra quisiste decir, nos entrega un valor entre 0 y 4 donde 0 diferencia amplia.
+
+![extensiones_2](src/extensiones_2.jpg)
+
+Estas dos funciones si nuestra aplicaciones implementan análisis de texto o análisis de voz no es necesario desarrollarlas desde cero ya que postgres lo implementa al nivel de la base de datos.
