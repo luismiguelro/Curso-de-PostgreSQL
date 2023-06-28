@@ -43,6 +43,7 @@
     - [Clase 24 Simulando una conexion a Bases de Datos remotas](#clase-24-simulando-una-conexion-a-bases-de-datos-remotas)
     - [Clase 25 Transacciones](#clase-25-transacciones)
     - [Clase 26 Otras Extensiones para Postgres](#clase-26-otras-extensiones-para-postgres)
+    - [Clase 27 Backups y Restauracion](#clase-27-backups-y-restauracion)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -1642,3 +1643,69 @@ Esta funcion es utilizada junto con algoritmos de machine learning y procesamien
 ![extensiones_2](src/extensiones_2.jpg)
 
 Estas dos funciones si nuestra aplicaciones implementan análisis de texto o análisis de voz no es necesario desarrollarlas desde cero ya que postgres lo implementa al nivel de la base de datos.
+
+### Clase 27 Backups y Restauracion
+
+Ha llegado el momento de guardar todo nuestro trabajo hasta el momento y tener una copia de seguridad en caso de que algo catastrófico ocurra, para eso Postgres tiene los servicios de restauracion, usaremos los siguientes comandos
+
+- pg_dump
+- pg_restore[psql]
+
+Tenemos nuestra base de datos con mucha informacion delicada, y vamos a crear una copia de seguridad, para ello vamos en PGAdmin a nuestra base de datos **"transporte"** haciendo click derecho y seleccionamos la opcion Backup... y se abrirá un formulario para preguntarnos que es lo que queremos hacer.
+
+![backup_1](src/backup_1.jpg)
+
+Tenemos los siguientes campos:
+
+- **Filename:** Para indicar el nombre de tu archivo  y el icono con tres puntos nos abre una ventana para seleccionar el directorio donde queremos guardar la  el backup
+
+- **Format:** Este tiene 4 opciones.
+  - custom: Solo se puede usar con PGAdmin.
+  - Tar: archivo comprimido .tar que contienen la estructura de la base de datos.
+  - plain: sql plano, tendrás toda la informacion como una gran query con las sentencias (create table, insert, etc) y los datos.
+  - Directory: tiene la estructura sin comprimir de la base de datos.
+
+- **Compression ratio:** el numero de veces que se ejecuta  el ciclo de compresión para que quede un archivo mas pequeño.
+
+- **Encoding:** La codificación de la base de datos por ejemplo UTF-8.
+
+- **Number of jobs:** no lo podemos modificar, lo define PGAdmin.
+
+- Role name: Dueño de quien sera el DUMP.
+
+En la pantalla de opciones podemos solicitar la data y el schema, o solo uno de ellos, los blobs se refiere a los datos de tipos binarios (imagen o archivo de texto), haz click en el símbolo ? para ver a detalle cada una de las opciones.
+
+![backup_2](src/backup_2.jpg)
+
+![backup_3](src/backup_3.jpg)
+
+Ahora para realizar el paso de Restauracion creamos una base de datos nueva (simulando que ya no existe la base transporte), damos click derecho y seleccionamos la opcion de Restore.
+
+![backup_4](src/backup_4.jpg)
+
+Con ello recuperamos nuestras tablas y la informacion que estas contenían.
+
+**Nota:** es importante resaltar que cuando se hace un backup para ser restaurado en una versión diferente se debe de usar la opción plana dado que el custom varia de versión a versión.
+
+Como hacer backup desde la consola
+
+Crear un fichero con las sentencias SQL listas para cargar el contenido de
+una db en otra db distinta (modo simple)
+
+```sql
+postgres=# pg_dump source_db_name > db_data.sql
+```
+
+Cargar un fichero con las sentencias SQL listas de una db en otra db
+nueva y distinta (modo simple)
+
+```sql
+postgres=# psql -d new_db_name -f db_data.sql
+```
+
+Otras opciones disponibles:
+
+```sql
+postgres=#\q
+...$ psql --help
+```
