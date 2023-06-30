@@ -44,6 +44,7 @@
     - [Clase 25 Transacciones](#clase-25-transacciones)
     - [Clase 26 Otras Extensiones para Postgres](#clase-26-otras-extensiones-para-postgres)
     - [Clase 27 Backups y Restauracion](#clase-27-backups-y-restauracion)
+    - [Clase 28 Mantenimiento](#clase-29-mantenimiento)
 ## Modulo 1 Configurar Postgres
 
 ### Clase 1 Introduccion
@@ -1709,3 +1710,47 @@ Otras opciones disponibles:
 postgres=#\q
 ...$ psql --help
 ```
+### Clase 29 Mantenimiento
+
+Este es un tema importante y que postgres realiza por debajo en segundo plano, en este proceso de vacuum (vaciado) quita todas las filas, columnas e items del disco duro que no están funcionando para optimizar los servicios.
+
+Postgres tiene dos niveles de limpieza.
+
+- Liviano: se ejecuta todo el tiempo para lograr las optimizaciones descritas anteriormente.
+
+- Completo (full): que es capaz de bloquear las tablas para hacer la limpieza y luego las desbloquea, es importante cuando tenemos una tabla muy grande y tenemos problemas de indexacion.
+
+El mantenimiento en PGAdmin lo llevamos a cabo dando click derecho sobre la base de datos o sobre una de las tablas, pero es muy diferente ya que solo afectamos una tabla, mientras a nivel de base de datos podemos llegar a bloquear todas las tablas hasta que la tarea de mantenimiento termine, este es su menu con sus caracteristicas, la mas importante es vacuum.
+
+![maintenance_1](src/maintenance_1.jpg)
+
+- Full: quiere decir que la tabla que vas a limpiar (en este caso estacion) quedara limpia en su totalidad, es decir se realizara la revision de todo el espacio en memoria para que todas las filas que ya no son aplicables se eliminen y todos los indices también.
+
+- Freeze: incluye que durante ese proceso se va a congelar, pero hay que tener en cuenta que un cuando se hace un vacuum full si no es posible hacerlo en lo que llega una consulta nueva esa tabla queda congelada y tendra un lot quiere decir que ninguna tabla podrá acceder a ella hasta que termine el proceso de limpieza.
+
+- Analyze: ejecuta una revision pero no hace cambios en la tabla.
+
+- Verbose Messages. Nos da el feedback de lo que esta sucediendo.
+
+- Reindex: aplica para tablas que tienen indices, entre ellos las llaves primarias, que los motores crean como indices porque son normalmente usados para búsquedas.
+
+- Custer: es decirle al motor de la base de datos que reorganice la el almacenamiento.
+
+Estas 4 opciones no es recomendable hacerlo a mano ya que postgres tiene mas de 20 años optimizando estos procesos, aunque eventualmente si puede llegar a ser necesario hacerlo hazlo en un horario que no afecte a tus usuarios o servicios.
+
+### Clase 28 Introduccion a Replicas
+
+Las replicas son mecanismos que nos permiten evitar problemas  de entrada y salida en los sistemas operativos.
+
+Ten en cuenta esta frase.
+
+![replicas_1](src/replicas_1.jpg)
+
+Cuando tu aplicación crece en usuarios/operaciones te vas a topar con limites en términos de física y electronica, es decir los recursos de tu servidor (disco, ram, cpu) tienen limites, ellos no pueden ser sobrepasados en sus procesos de lectura y escritura que no pueden llevarse al mismo tiempo, por este motivo postgres bloquea la tabla para escritura mientras la lees y viceversa, esto para conservar la consistencia de datos, aquí entran las replicas a solucionar este problema.
+
+**Estrategia de Replicas**.
+
+Tendremos la base de datos principal se hacen todas las modificaciones y tener una base de datos secundaria donde solamente se hacen las lecturas, separa las acciones nos permite separar todas las tareas que hace internamente postgres es decir los cambios los hace en "A" y  automáticamente se llevan a la tabla donde se leen los datos "B", este proceso lo hace postgres no tiene que hacer nada a mano, solamente es necesario configurar al menos 2 servidores de postgres (por lo menos 2, ya que puedes tener una cantidad ilimitada de replicas) uno como maestro y otro como esclavo, deberás modificar tu aplicación para que todas las modificaciones las haga sobre la base de datos principal o "master" y que todas las lecturas las haga sobre la replica (copia en caliente de la base de datos).
+
+IPS (In operation per second) es la limitante a nivel de sistemas operativos, como saber que nivel nos sirve (10,20, 40 iops)
+
